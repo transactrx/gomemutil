@@ -12,14 +12,15 @@ var memcachedClient *memcache.Client
 var serverList string
 var seed string
 
+// Add writes the given item, if no value already exists for its key
 func AddCacheValue(memKey string, value []byte, expirationInSecond int) error {
 
 	item := &memcache.Item{
-		Key:        fetchSeed() + memKey,
+		Key:        getCacheKey(memKey),
 		Value:      value,
 		Expiration: int32(expirationInSecond),
 	}
-
+	logger.Printf("AddCacheValue key:%s, expirationInSecond:%d", memKey, expirationInSecond)
 	// Add the item to the memcache, if the key does not already exist
 	if err := getMemcachedClient().Add(item); err == memcache.ErrNotStored {
 		logger.Printf("item with key %q already exists", item.Key)
@@ -32,11 +33,11 @@ func AddCacheValue(memKey string, value []byte, expirationInSecond int) error {
 	return nil
 }
 
+// Get gets the item for the given key.
 func GetCachedObject(memKey string) ([]byte, error) {
-
-	// Get the item from the memcache
-	if item, err := getMemcachedClient().Get(fetchSeed() + memKey); err == memcache.ErrCacheMiss {
-		logger.Print("item not in the cache")
+	logger.Printf("GetCachedObject key:%s ", memKey)
+	if item, err := getMemcachedClient().Get(getCacheKey(memKey)); err == memcache.ErrCacheMiss {
+		logger.Printf("item %s not in the cache", memKey)
 		return nil, nil
 	} else if err != nil {
 		logger.Printf("error getting item: %v", err)
@@ -45,6 +46,24 @@ func GetCachedObject(memKey string) ([]byte, error) {
 		return item.Value, nil
 	}
 
+}
+
+// Delete deletes the item with the provided key.
+func DeleteCachedObject(memKey string) error {
+	logger.Printf("DeleteCachedObject key:%s ", memKey)
+	// Get the item from the memcache
+	if err := getMemcachedClient().Delete(getCacheKey(memKey)); err == memcache.ErrCacheMiss {
+		logger.Printf("item %s not in the cache", memKey)
+	} else if err != nil {
+		logger.Printf("error deleting item: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func getCacheKey(memKey string) string {
+	return fetchSeed() + memKey
 }
 
 func fetchSeed() string {
