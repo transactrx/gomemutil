@@ -10,6 +10,7 @@ import (
 var logger = log.New(os.Stdout, "memcached", log.Ldate|log.Ltime|log.LstdFlags|log.Lshortfile)
 var memcachedClient *memcache.Client
 var serverList string
+var seed string
 
 func AddCacheValue(memKey string, value []byte, expirationInSecond int) error {
 
@@ -47,12 +48,14 @@ func GetCachedObject(memKey string) ([]byte, error) {
 }
 
 func fetchSeed() string {
-	result := "defaultseed"
-	confSeed := os.Getenv("MEMCACHED_SEED")
-	if len(strings.TrimSpace(confSeed)) > 0 {
-		result = confSeed
+	if (len(strings.TrimSpace(seed)) > 0) == false {
+		seed = "defaultseed"
+		confSeed := os.Getenv("MEMCACHED_SEED")
+		if len(strings.TrimSpace(confSeed)) > 0 {
+			seed = confSeed
+		}
 	}
-	return result
+	return seed
 }
 
 func getMemcachedClient() *memcache.Client {
@@ -62,6 +65,7 @@ func getMemcachedClient() *memcache.Client {
 		logger.Printf("******************************************* NATS CONFIG *******************************************")
 		logger.Printf("***************************************************************************************************")
 		logger.Printf("MEMCACHED_SERVERLIST: %s", serverList)
+		logger.Printf("MEMCACHED_SEED: %s", fetchSeed())
 		logger.Printf("***************************************************************************************************")
 		logger.Printf("***************************************************************************************************")
 		memcachedClient = memcache.New(getMemcachedServerList(serverList)...)
