@@ -33,6 +33,24 @@ func AddCacheValue(memKey string, value []byte, expirationInSecond int) error {
 	return nil
 }
 
+// Set writes the given item, unconditionally.
+func SetCacheValue(memKey string, value []byte, expirationInSecond int) error {
+
+	item := &memcache.Item{
+		Key:        getCacheKey(memKey),
+		Value:      value,
+		Expiration: int32(expirationInSecond),
+	}
+	logger.Printf("SetCacheValue key:%s, expirationInSecond:%d", memKey, expirationInSecond)
+	// Add the item to the memcache, if the key does not already exist
+	if err := getMemcachedClient().Set(item); err != nil {
+		logger.Printf("error setting item: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 // Get gets the item for the given key.
 func GetCachedObject(memKey string) ([]byte, error) {
 	logger.Printf("GetCachedObject key:%s ", memKey)
