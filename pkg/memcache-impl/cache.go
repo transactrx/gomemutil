@@ -42,7 +42,7 @@ func SetCacheValue(memKey string, value []byte, expirationInSecond int) error {
 		Expiration: int32(expirationInSecond),
 	}
 	logger.Printf("SetCacheValue key:%s, expirationInSecond:%d", memKey, expirationInSecond)
-	// Add the item to the memcache, if the key does not already exist
+	// Add or Update the item to the memcache, unconditionally if the key already exists or not
 	if err := getMemcachedClient().Set(item); err != nil {
 		logger.Printf("error setting item: %v", err)
 		return err
